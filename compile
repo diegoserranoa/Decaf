@@ -1,0 +1,10 @@
+#!/bin/sh
+mv Semantico.java Semantico.temp
+rm *.java
+rm *.class
+rm *.jj
+mv Semantico.temp Semantico.java
+./jjtree Parser.jjt
+./javacc Parser.jj
+javac *.java
+java Parser legal-01
