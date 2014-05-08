@@ -1,4 +1,5 @@
 #!/bin/sh
+
 mv Semantico.java Semantico.temp
 rm *.java
 rm *.class

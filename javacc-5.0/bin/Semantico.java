@@ -114,6 +114,10 @@ public class Semantico implements ParserVisitor
         System.out.println(line);
     }
 
+    public void debug(String s){
+        System.out.println(s);
+    }
+
 	public Object defaultVisit(SimpleNode node, Object data){
     	node.childrenAccept(this, data);
     	return data;
@@ -349,24 +353,53 @@ public class Semantico implements ParserVisitor
 	public Object visit(ASTLESSER_OR_EQUAL node, Object data){
 		return defaultVisit(node, data);
 	}
+
+    public boolean isInteger(String s) {
+    try {
+        Integer.parseInt(s);
+        return true;
+    }
+    catch(NumberFormatException e) {
+        return false;
+    }
+}
 	public Object visit(ASTPLUS node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
-        /* Type check para ver si son ints
-        if (!simbolos.containsKey(leftChild)){
-            System.out.println("ID " + leftChild + " no declarado.");
-        } else if (!simbolos.containsKey(rightChild)){
-            System.out.println("ID " + rightChild + " no declarado.");
+
+        // ver si el valor es una variable o int
+        if (isInteger(leftChild)){
+            // es entero
         } else {
-            if (!"INT".equals(simbolos.get(leftChild).type)) {
-                System.out.println("ID " + leftChild + " no es de tipo INT.");
-            } else if (!"INT".equals(simbolos.get(rightChild).type)) {
-                System.out.println("ID " + rightChild + " no es de tipo INT.");
-            } else {
-                
+            // es una variable
+            // checar si ya fue declarada
+            if (!simbolos.containsKey(leftChild)){
+                throw new RuntimeException("ID " + leftChild + " no declarado.");
+            }
+            //  checar su tipo, debe de ser INT
+
+            Map id = this.simbolos.get(leftChild);
+            if (!"INT".equals(id.type)) {
+                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
             }
         }
-        */
+
+        if (isInteger(rightChild)){
+            // es entero
+        } else {
+            // es una variable
+            // checar si ya fue declarada
+            
+            if (!simbolos.containsKey(rightChild)){
+                throw new RuntimeException("ID " + rightChild + " no declarado.");
+            }
+            //  checar su tipo, debe de ser INT
+            Map id = this.simbolos.get(rightChild);
+            if (!"INT".equals(id.type)) {
+                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
+            }
+        }
+        
         
         varTempCounter++;
         printCode("t"+varTempCounter + " = " + leftChild.toString() + " + " + rightChild);
