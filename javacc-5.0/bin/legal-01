@@ -1,5 +1,6 @@
 class Program {
   int a, b, c, d;
+  int e[5];
   boolean bool;
 
   void main(){

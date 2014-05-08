@@ -210,6 +210,9 @@ public class Semantico implements ParserVisitor
 	}
 
 	public Object visit(ASTID_SIZE node, Object data){
+        if ((int) node.jjtGetChild(0).jjtAccept(this, null) <= 0){
+            throw new RuntimeException("No se puede declarar arreglos con tamaño menor o igual a 0");
+        }
         return (int) node.jjtGetChild(0).jjtAccept(this, null);
 	}
 	public Object visit(ASTMETHOD_DECLARATION node, Object data){
