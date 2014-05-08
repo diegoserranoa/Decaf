@@ -3,7 +3,7 @@ class Program {
   int e[5];
   boolean bool;
 
-  int hola(int a){
+  int hola(int a, boolean b, int c){
       return;
   }
 
@@ -15,10 +15,10 @@ class Program {
   	}
 
   	if (true || bool){
-  		a = 10;
+  		a = 5;
   	}
 
-    hola(a);
+    hola(5, true, a);
   }
 
   

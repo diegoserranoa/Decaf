@@ -25,9 +25,11 @@ public class Semantico implements ParserVisitor
 	private class Method{
         public String type;
         public HashMap<String, String> parameters;
+        public HashMap<String, String> parametersIndex;
         
         public Method(){
             this.parameters = new HashMap<>();
+            this.parametersIndex = new HashMap<>();
         }        
         
         public String getParameterWithKey(String key){
@@ -130,7 +132,8 @@ public class Semantico implements ParserVisitor
 	}
 	public Object visit(ASTPROGRAM node, Object data){
         node.childrenAccept(this, data);
-        boolean hasMain = false;
+        boolean hasMain = this.methods.containsKey("main");
+        /*
         Set<String> keys = this.methods.keySet();
         Iterator<String> e = keys.iterator();
         while(e.hasNext()){
@@ -140,6 +143,7 @@ public class Semantico implements ParserVisitor
                 break;
             }
         }
+        */
         if (!hasMain){
             throw new RuntimeException ("El programa no tiene medoto main");
         }
@@ -225,6 +229,7 @@ public class Semantico implements ParserVisitor
             // Existen parámetros
             if( node.jjtGetNumChildren() > 3 ){
                 int i = 2;
+                int index = 0;
                 while( i + 1 < node.jjtGetNumChildren() ){
                     String typeParameter = (String) node.jjtGetChild(i).jjtAccept(this, null);
                     String idParameter = (String) node.jjtGetChild(i+1).jjtAccept(this, null);
@@ -232,10 +237,11 @@ public class Semantico implements ParserVisitor
                     boolean idParameterDoesExist = method.parameters.containsKey(idParameter);
                     if( !idParameterDoesExist ){
                         method.parameters.put(idParameter, typeParameter);
+                        method.parametersIndex.put(idParameter, index + "");
                     }else{
                         throw new RuntimeException("ID" + idParameter + " ya existe.");
                     }
-                    
+                    index++;
                     i += 2;
                 }
             }
@@ -376,30 +382,30 @@ public class Semantico implements ParserVisitor
         if (methodExists){
             Method mapa = this.methods.get(leftChild);
             int parameters = 0;
-            Set<String> keysParameters = mapa.parameters.keySet();
-            if(!keysParameters.isEmpty()){
-                Iterator<String> itParameters = keysParameters.iterator();
+            Set<String> indexParameters = mapa.parametersIndex.keySet();
+            String[] typeParameters = new String[indexParameters.size()];
+
+            if(!indexParameters.isEmpty()){
+                Iterator<String> itParameters = indexParameters.iterator();
                 while(itParameters.hasNext()){
                     String keyParameter = itParameters.next();
+                    int indexParameter = Integer.parseInt(mapa.parametersIndex.get(keyParameter));
                     String typeParameter = mapa.parameters.get(keyParameter);
+                    typeParameters[indexParameter] = typeParameter;
                     parameters++;
                 }
             }
 
             // Existen parámetros
-            System.out.println(node.jjtGetNumChildren());
             if(node.jjtGetNumChildren() - 1  == parameters){
                 int i = 1;
-                while( i + 1 < node.jjtGetNumChildren() ){
-                    String idParameter = (String) node.jjtGetChild(i).jjtAccept(this, null);
-                    
-                    boolean idParameterDoesExist = mapa.parameters.containsKey(idParameter);
-                    if( !idParameterDoesExist ){
-                        mapa.parameters.put(idParameter, typeParameter);
-                    }else{
-                        throw new RuntimeException("ID" + idParameter + " ya existe.");
-                    }
-                    
+                while(i < node.jjtGetNumChildren()){
+                    String idParameter = node.jjtGetChild(i).jjtAccept(this, null) + "";
+
+                    // type check
+                    System.out.println(typeParameters[i-1]);
+                    typeCheck(idParameter, typeParameters[i - 1]);
+
                     i++;
                 }
             } else {
@@ -545,11 +551,12 @@ public class Semantico implements ParserVisitor
                 // checar su tipo, debe de ser INT
                 Map id = this.simbolos.get(s);
                 if (!"INT".equals(id.type)) {
+                    System.out.println(id.type);
                     throw new RuntimeException("ID " + s + " no es de tipo INT.");
                 }
 
             }
-        } else {
+        } else if (type.equals("BOOL")) {
             // ver si el valor de la variable es boolean
             if (isInteger(s)){
                 // es entero
@@ -570,6 +577,8 @@ public class Semantico implements ParserVisitor
 
                 
             }
+        } else if (type.equals("INT[]")){
+            // arreglo de enteros
         }
         
     }
