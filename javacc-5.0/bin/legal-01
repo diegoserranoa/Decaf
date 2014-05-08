@@ -3,7 +3,8 @@ class Program {
   boolean bool;
 
   void main(){
-  	a = c + b;
+  	a = false;
+  	a = c + b + d;
   	bool = a;
   }
 }

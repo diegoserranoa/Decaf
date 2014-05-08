@@ -3,6 +3,7 @@ import java.util.*;
 public class Semantico implements ParserVisitor
 {
 	public HashMap<String, Map<String, Object>> simbolos;
+    public HashMap<String, Map<String, Object>> tempSimbolos;
     public HashMap<String, Method> methods;
 
 
@@ -37,6 +38,7 @@ public class Semantico implements ParserVisitor
 	public Semantico(){
 		this.simbolos = new HashMap<>();
         this.methods = new HashMap<>();
+        this.tempSimbolos = new HashMap<>();
         this.varTempCounter = 0;
         this.lineNumber = 0;
         this.labels = 0;
@@ -291,49 +293,38 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 
-    void addTempVar(SimpleNode node){
-        String type = (String) node.jjtGetChild(0).jjtAccept(this, null);
+    void addTempVar(String id, String type){
         Map<String, Object> symbol;
-        String id;
         
-        for( int i = 1; i<node.jjtGetNumChildren(); i++){
-            
-            id = (String) node.jjtGetChild(i).jjtAccept(this, null);
-            symbol = new Map<>(type, null);
-            
-            switch (type) {
-                case "INT":
-                    {
-                        symbol.value = "0";
-                        break;
-                    }
-                case "BOOL":
-                    {
-                        symbol.value = "false";
-                        break;
-                    }
-            }
-            
-            boolean keyDoesExist = this.simbolos.containsKey(id);
-            if( !keyDoesExist ){
-                this.simbolos.put(id, symbol);
-            }else{
-                throw new RuntimeException("ID " + id + " ya existe.");
-            }
+        symbol = new Map<>(type, null);
+        
+        switch (type) {
+            case "INT":
+                {
+                    symbol.value = "0";
+                    break;
+                }
+            case "BOOL":
+                {
+                    symbol.value = "false";
+                    break;
+                }
         }
+        
+        this.tempSimbolos.put(id, symbol);
     }
 
 	public Object visit(ASTASSIGN node, Object data){
 		String leftChild = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+        
         boolean idDoesExist = simbolos.containsKey(leftChild);
         if(!idDoesExist){
             throw new RuntimeException("ID " + leftChild + " no ha sido declarado.");
         }
         
-
         printCode(leftChild + " = " + rightChild);
-        return defaultVisit(node, data);
+        return 0;
 	}
 	public Object visit(ASTADD_ASSIGN node, Object data){
 		String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
@@ -390,222 +381,103 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 
-    public boolean isInteger(String s) {
-    try {
-        Integer.parseInt(s);
-        return true;
+    boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        }
+        catch(NumberFormatException e) {
+            return false;
+        }
     }
-    catch(NumberFormatException e) {
-        return false;
+
+    void typeCheck(String s){
+        // ver si el valor es una variable o int
+        if (isInteger(s)){
+            // es entero
+        } else if (!tempSimbolos.containsKey(s)){
+            // es una variable
+            // checar si ya fue declarada
+            if (!simbolos.containsKey(s)){
+                throw new RuntimeException("ID " + s + " no declarado.");
+            }
+            //  checar su tipo, debe de ser INT
+            Map id = this.simbolos.get(s);
+            if (!"INT".equals(id.type)) {
+                throw new RuntimeException("ID " + s + " no es de tipo INT.");
+            }
+        }
     }
-}
+
 	public Object visit(ASTPLUS node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(leftChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(leftChild)){
-                throw new RuntimeException("ID " + leftChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
+        // typeCheck
+        typeCheck(leftChild);
+        typeCheck(rightChild);
 
-            Map id = this.simbolos.get(leftChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
-            }
-        }
-
-        if (isInteger(rightChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            
-            if (!simbolos.containsKey(rightChild)){
-                throw new RuntimeException("ID " + rightChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-            Map id = this.simbolos.get(rightChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
-            }
-        }
-        
-        
         varTempCounter++;
-        printCode("t"+varTempCounter + " = " + leftChild.toString() + " + " + rightChild);
-        return "t"+varTempCounter;
+        String varTemp = "t"+varTempCounter;
+        addTempVar(varTemp, "INT");
+        printCode(varTemp + " = " + leftChild.toString() + " + " + rightChild);
+        return varTemp;
 	}
 	public Object visit(ASTMINUS node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(leftChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(leftChild)){
-                throw new RuntimeException("ID " + leftChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-
-            Map id = this.simbolos.get(leftChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
-            }
-        }
-
-        if (isInteger(rightChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            
-            if (!simbolos.containsKey(rightChild)){
-                throw new RuntimeException("ID " + rightChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-            Map id = this.simbolos.get(rightChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
-            }
-        }
-
-
+        // typeCheck
+        typeCheck(leftChild);
+        typeCheck(rightChild);
         
         varTempCounter++;
-        printCode("t"+varTempCounter + " = " + leftChild.toString() + " - " + rightChild);
-        return "t"+varTempCounter;
+        String varTemp = "t"+varTempCounter;
+        addTempVar(varTemp, "INT");
+        printCode(varTemp + " = " + leftChild.toString() + " - " + rightChild);
+        return varTemp;
 	}
 	public Object visit(ASTTIMES node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(leftChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(leftChild)){
-                throw new RuntimeException("ID " + leftChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-
-            Map id = this.simbolos.get(leftChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
-            }
-        }
-
-        if (isInteger(rightChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            
-            if (!simbolos.containsKey(rightChild)){
-                throw new RuntimeException("ID " + rightChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-            Map id = this.simbolos.get(rightChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
-            }
-        }
+        // typeCheck
+        typeCheck(leftChild);
+        typeCheck(rightChild);
         
         varTempCounter++;
-        printCode("t"+varTempCounter + " = " + leftChild.toString() + " * " + rightChild);
-        return "t"+varTempCounter;
+        String varTemp = "t"+varTempCounter;
+        addTempVar(varTemp, "INT");
+        printCode(varTemp + " = " + leftChild.toString() + " * " + rightChild);
+        return varTemp;
 	}
 	public Object visit(ASTOVER node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(leftChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(leftChild)){
-                throw new RuntimeException("ID " + leftChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-
-            Map id = this.simbolos.get(leftChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
-            }
-        }
-
-        if (isInteger(rightChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            
-            if (!simbolos.containsKey(rightChild)){
-                throw new RuntimeException("ID " + rightChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-            Map id = this.simbolos.get(rightChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
-            }
-        }
+        // typeCheck
+        typeCheck(leftChild);
+        typeCheck(rightChild);
         
         varTempCounter++;
-        printCode("t"+varTempCounter + " = " + leftChild.toString() + " / " + rightChild);
-        return "t"+varTempCounter;
+        String varTemp = "t"+varTempCounter;
+        addTempVar(varTemp, "INT");
+        printCode(varTemp + " = " + leftChild.toString() + " / " + rightChild);
+        return varTemp;
 	}
 	public Object visit(ASTMODULE node, Object data){
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(leftChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(leftChild)){
-                throw new RuntimeException("ID " + leftChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-
-            Map id = this.simbolos.get(leftChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + leftChild + " no es de tipo INT.");
-            }
-        }
-
-        if (isInteger(rightChild)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            
-            if (!simbolos.containsKey(rightChild)){
-                throw new RuntimeException("ID " + rightChild + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-            Map id = this.simbolos.get(rightChild);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + rightChild + " no es de tipo INT.");
-            }
-        }
+        // typeCheck
+        typeCheck(leftChild);
+        typeCheck(rightChild);
         
         varTempCounter++;
-        printCode("t"+varTempCounter + " = " + leftChild.toString() + " MOD " + rightChild);
-        return "t"+varTempCounter;
+        String varTemp = "t"+varTempCounter;
+        addTempVar(varTemp, "INT");
+        printCode(varTemp + " = " + leftChild.toString() + " MOD " + rightChild);
+        return varTemp;
 	}
 	public Object visit(ASTLOGICAL_NOT node, Object data){
 		String child    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
@@ -617,22 +489,8 @@ public class Semantico implements ParserVisitor
 	public Object visit(ASTUNARY_MINUS node, Object data){
 		String child = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
 
-        // ver si el valor es una variable o int
-        if (isInteger(child)){
-            // es entero
-        } else {
-            // es una variable
-            // checar si ya fue declarada
-            if (!simbolos.containsKey(child)){
-                throw new RuntimeException("ID " + child + " no declarado.");
-            }
-            //  checar su tipo, debe de ser INT
-
-            Map id = this.simbolos.get(child);
-            if (!"INT".equals(id.type)) {
-                throw new RuntimeException("ID " + child + " no es de tipo INT.");
-            }
-        }
+        // typeCheck
+        typeCheck(child);
         
         varTempCounter++;
         printCode("t"+varTempCounter + " = -" + child);
