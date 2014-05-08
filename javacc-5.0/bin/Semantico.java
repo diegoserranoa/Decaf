@@ -360,28 +360,98 @@ public class Semantico implements ParserVisitor
         
         return defaultVisit(node, data);
 	}
+
 	public Object visit(ASTOR node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be BOOLEAN
+        typeCheck(leftChild, "BOOLEAN");
+        typeCheck(rightChild, "BOOLEAN");
+
 		return defaultVisit(node, data);
 	}
+
 	public Object visit(ASTAND node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be BOOLEAN
+        typeCheck(leftChild, "BOOLEAN");
+        typeCheck(rightChild, "BOOLEAN");
+
 		return defaultVisit(node, data);
 	}
+
 	public Object visit(ASTEQUAL node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        /* type check
+        if (leftChild.type.equals("INT")){
+            typeCheck(leftChild, "INT");
+            typeCheck(rightChild, "INT");
+        } else {
+            typeCheck(leftChild, "BOOLEAN");
+            typeCheck(rightChild, "BOOLEAN");            
+        }
+        */
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTNOT_EQUAL node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        /* type check
+        if (leftChild.type.equals("INT")){
+            typeCheck(leftChild, "INT");
+            typeCheck(rightChild, "INT");
+        } else {
+            typeCheck(leftChild, "BOOLEAN");
+            typeCheck(rightChild, "BOOLEAN");            
+        }
+        */
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTGREATER node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be INT
+        typeCheck(leftChild, "INT");
+        typeCheck(rightChild, "INT");
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTGREATER_OR_EQUAL node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be INT
+        typeCheck(leftChild, "INT");
+        typeCheck(rightChild, "INT");
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTLESSER node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be INT
+        typeCheck(leftChild, "INT");
+        typeCheck(rightChild, "INT");
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTLESSER_OR_EQUAL node, Object data){
+        String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
+        String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
+
+        // Both have to be INT
+        typeCheck(leftChild, "INT");
+        typeCheck(rightChild, "INT");
+
 		return defaultVisit(node, data);
 	}
 
@@ -401,9 +471,14 @@ public class Semantico implements ParserVisitor
             if (isInteger(s)){
                 // es entero
             } else if (s.equals("false") || s.equals("true")) {
-                    throw new RuntimeException("Tipo " + s + " no se puede asignar a variable entera.");
+                    throw new RuntimeException("Tipo " + s + " encontrado. Se esperaba un tipo INT.");
             } else if (!tempSimbolos.containsKey(s)){
                 // es una variable
+
+                // checar si ya fue declarada
+                if (!simbolos.containsKey(s)){
+                    throw new RuntimeException("ID " + s + " no declarado.");
+                }
 
                 // checar su tipo, debe de ser INT
                 Map id = this.simbolos.get(s);
@@ -411,19 +486,19 @@ public class Semantico implements ParserVisitor
                     throw new RuntimeException("ID " + s + " no es de tipo INT.");
                 }
 
-                // checar si ya fue declarada
-                if (!simbolos.containsKey(s)){
-                    throw new RuntimeException("ID " + s + " no declarado.");
-                }
             }
         } else {
             // ver si el valor de la variable es boolean
             if (isInteger(s)){
                 // es entero
-
-                    throw new RuntimeException("Valor " + s + " es un entero. No se lo puede asignar a un BOOLEAN.");
+                    throw new RuntimeException("Valor " + s + " es un entero. Se esperaba un tipo BOOLEAN.");
             } else if (!tempSimbolos.containsKey(s) && !"true".equals(s) && !"false".equals(s)){
                 // es una variable
+
+                // checar si ya fue declarada
+                if (!simbolos.containsKey(s)){
+                    throw new RuntimeException("ID " + s + " no declarado.");
+                }
 
                 // checar su tipo, debe de ser BOOL
                 Map id = this.simbolos.get(s);
@@ -431,10 +506,7 @@ public class Semantico implements ParserVisitor
                     throw new RuntimeException("ID " + s + " no es de tipo BOOLEAN.");
                 }
 
-                // checar si ya fue declarada
-                if (!simbolos.containsKey(s)){
-                    throw new RuntimeException("ID " + s + " no declarado.");
-                }
+                
             }
         }
         

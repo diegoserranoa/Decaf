@@ -8,4 +8,20 @@ mv Semantico.temp Semantico.java
 ./jjtree Parser.jjt
 ./javacc Parser.jj
 javac *.java
-java Parser legal-01
+# java Parser illegal-01.dcf
+# java Parser illegal-02.dcf
+java Parser illegal-03.dcf
+# java Parser illegal-04.dcf
+# java Parser illegal-05.dcf
+# java Parser illegal-06.dcf
+# java Parser illegal-07.dcf
+# java Parser illegal-08.dcf
+# java Parser illegal-09.dcf
+# java Parser illegal-10.dcf
+# java Parser illegal-11.dcf
+# java Parser illegal-12.dcf
+# java Parser illegal-13.dcf
+# java Parser illegal-14.dcf
+# java Parser illegal-15.dcf
+# java Parser illegal-16.dcf
+# java Parser illegal-17.dcf
