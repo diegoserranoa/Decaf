@@ -4,11 +4,11 @@ class Program {
   boolean bool;
 
   int hola(int a, boolean b, int c){
-      return;
+    return 5;
   }
 
   void main(){
-  	a = c + b + d;
+    a = c + b + d;
   	bool = false;
   	if (5 < 10){
   		a = 5;

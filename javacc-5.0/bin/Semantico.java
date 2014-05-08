@@ -252,16 +252,41 @@ public class Semantico implements ParserVisitor
             }else{
                 throw new RuntimeException("Method ID " + idMethod + " ya existe.");
             }
+            Map <String, String> mapa = new Map<>("METHOD", method.type);
+
+            node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, mapa);
         }
-        return defaultVisit(node, data);
+        return 0;
 	}
 	public Object visit(ASTTYPE_VOID node, Object data){
 		return "VOID";
 	}
 	public Object visit(ASTBLOCK node, Object data){
 
+        if (((Map)data).type == "METHOD"){
+            if (((Map)data).value == "INT"){
+                boolean hasReturn = false;
+                if( node.jjtGetNumChildren() > 0 ){
+                    int i = 0;
+                    while( i < node.jjtGetNumChildren() ){
+                        String child = (String) node.jjtGetChild(i).jjtAccept(this, null);
+                        if ( true || child.equals("RETURN")){
+                            hasReturn = true;
+                            break;
+                        }
+                        i++;
+                    }
+                    if (!hasReturn){
+                        throw new RuntimeException ("El metodo debe tener un return.");
+                    }
+                } else {
+                    throw new RuntimeException ("El metodo debe tener un return.");
+                }
+            }
+        }
 		return defaultVisit(node, data);
 	}
+
 	public Object visit(ASTVARIABLE_DECLARATION node, Object data){
 		String type = (String) node.jjtGetChild(0).jjtAccept(this, null);
         Map<String, Object> symbol;
@@ -310,7 +335,7 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTRETURN node, Object data){
-		return defaultVisit(node, data);
+		return "RETURN";
 	}
 	public Object visit(ASTBREAK node, Object data){
 		return defaultVisit(node, data);
@@ -341,18 +366,60 @@ public class Semantico implements ParserVisitor
     }
 
 	public Object visit(ASTASSIGN node, Object data){
-		String leftChild = (String) node.jjtGetChild(0).jjtAccept(this, data);
+        String leftChild = (String) node.jjtGetChild(0).jjtAccept(this, data);
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
 
+        /*
+        Map<String, Object> symbol = (Map<String, Object>) node.jjtGetChild(i).jjtAccept(this, null);
+        String id = symbol.type;
+            
+        symbol.type = type;
+        if( symbol.value != null ){
+            symbol.type += "[]";
+            
+            int size = (int) symbol.value;
+            switch (type) {
+                case "INT":
+                    {
+                        int[] array = new int[size];
+                        symbol.value = array;
+                        break;
+                    }
+                case "BOOL":
+                    {
+                        boolean[] array = new boolean[size];
+                        symbol.value = array;
+                        break;
+                    }
+            }
+        }else{
+            switch (type) {
+                case "INT":
+                    {
+                        symbol.value = "0";
+                        break;
+                    }
+                case "BOOL":
+                    {
+                        symbol.value = "false";
+                        break;
+                    }
+            }
+        }
+        
+        System.out.println("leftChild: " + leftChild);
+        //System.out.println("rightChild: " + rightChild);
+
+        */
         boolean idDoesExist = simbolos.containsKey(leftChild);
         if(!idDoesExist){
             throw new RuntimeException("ID " + leftChild + " no ha sido declarado.");
         }
-
+        
         if (!tempSimbolos.containsKey(rightChild)){
             typeCheck(rightChild, this.simbolos.get(leftChild).type);
         }
-        
+
         printCode(leftChild + " = " + rightChild);
         return 0;
 	}
@@ -411,8 +478,6 @@ public class Semantico implements ParserVisitor
             } else {
                 throw new RuntimeException("El metodo " + leftChild + " recibe " + parameters + " parámetro(s).");
             }
-
-
         } else {
             throw new RuntimeException("El metodo " + leftChild + " no existe.");
         }
