@@ -4,11 +4,18 @@ class Program {
   boolean bool;
 
   int hola(int a, boolean b, int c){
-    int z;
+    int z, y;
+    boolean chao;
+    if (z == z){
+      int z;
+      int z;
+    }
     return 5 + 5;
   }
 
   void main(){
+
+    a = b + c + d;
 
     for a = 5 + 1, 10 {
       b = 1;
