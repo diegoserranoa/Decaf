@@ -269,7 +269,7 @@ public class Semantico implements ParserVisitor
                 if( node.jjtGetNumChildren() > 0 ){
                     int i = 0;
                     while( i < node.jjtGetNumChildren() ){
-                        String child = (String) node.jjtGetChild(i).jjtAccept(this, null);
+                        String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
                         if ( true || child.equals("RETURN")){
                             hasReturn = true;
                             break;
@@ -335,6 +335,16 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTRETURN node, Object data){
+        if (node.jjtGetNumChildren() > 0){
+            String child = (String)node.jjtGetChild(0).jjtAccept(this, null).toString();
+            if (data.equals("INT")){
+                typeCheck(child, "INT");
+            } else if (data.equals("BOOL")){
+                typeCheck(child, "BOOL");
+            }
+        } else {
+            throw new RuntimeException("Return debe regresar un valor.");
+        }
 		return "RETURN";
 	}
 	public Object visit(ASTBREAK node, Object data){
