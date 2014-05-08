@@ -6,8 +6,7 @@ class Program {
   int hola(int a, boolean b, int c){
     int z, y;
     boolean chao;
-    if (z == z){
-      int z;
+    if (z == z && z == z){
       int z;
     }
     return 5 + 5;
@@ -15,9 +14,19 @@ class Program {
 
   void main(){
     int foo;
-    a = b + c + d + foo;
+    a = b - c * d / foo;
 
     bool = false;
+
+    if (z == z && z == z){
+      int z;
+    }
+
+    for a = 5 , 10 {
+      int a;
+      b = 5;
+    }
+
   	if (5 < 10){
   		a = 5;
   	}

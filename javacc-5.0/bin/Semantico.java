@@ -256,7 +256,7 @@ public class Semantico implements ParserVisitor
 
             ArrayList<Object> datos = new ArrayList<Object>();
             Map <String, String> mapa = new Map<>("METHOD", method.type);
-            datos.add(datos);
+            datos.add(mapa);
             datos.add(newNode);
 
             node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, datos);
@@ -268,18 +268,22 @@ public class Semantico implements ParserVisitor
 	}
 	public Object visit(ASTBLOCK node, Object data){
         if (data instanceof ArrayList){
-            if (node.jjtGetNumChildren() > 0){
-                int i = 0;
-                while (i < node.jjtGetNumChildren() - 1){
-                    //if(node.jjtGetChild(i).toString().equals("VARIABLE_DECLARATION")){
-                    SymbolNode nodo = (SymbolNode) ((ArrayList)data).get(1);   
-                    node.jjtGetChild(i).jjtAccept(this, nodo);
-                    i++;
-                }
-            }
-            if (((ArrayList)data).get(0) instanceof Map) {
-                if (((Map)data).type == "METHOD"){
-                    if (((Map)data).value == "INT"){
+            ArrayList <Object> array = (ArrayList)data;
+            
+            if (array.get(0) instanceof Map) {
+                Map <String, Object> mapita = (Map)array.get(0);
+                if (mapita.type == "METHOD"){
+                    if (node.jjtGetNumChildren() > 0){
+                        int i = 0;
+                        while (i < node.jjtGetNumChildren()){
+                            //if(node.jjtGetChild(i).toString().equals("VARIABLE_DECLARATION")){
+                            SymbolNode nodo = (SymbolNode) ((ArrayList)data).get(1);
+                            node.jjtGetChild(i).jjtAccept(this, nodo);
+                            i++;
+                        }
+                    }
+                    /*
+                    if (mapita.value == "INT"){
                         boolean hasReturn = false;
                         if( node.jjtGetNumChildren() > 0 ){
                             int i = 0;
@@ -298,13 +302,26 @@ public class Semantico implements ParserVisitor
                             throw new RuntimeException ("El metodo debe tener un return.");
                         }
                     }
+                    */
+                }
+            } else if (array.get(0) instanceof String){
+                if (array.get(0).equals("FOR")){
+                    int i = 0;
+                    while (i < node.jjtGetNumChildren()){
+                        SymbolNode nodo = (SymbolNode) array.get(1);   
+                        node.jjtGetChild(i).jjtAccept(this, nodo);
+                        i++;
+                    }
+                } else if (array.get(0).equals("IF")){
+                    int i = 0;
+                    while (i < node.jjtGetNumChildren()){
+                        SymbolNode nodo = (SymbolNode) array.get(1);   
+                        node.jjtGetChild(i).jjtAccept(this, nodo);
+                        i++;
+                    }
                 }
             }
         } 
-        else if (data instanceof String){
-            if (data.equals("FOR")){
-            }
-        }
 		return 0;
 	}
 
@@ -351,10 +368,30 @@ public class Semantico implements ParserVisitor
 		return "BOOL";
 	}
 	public Object visit(ASTIF node, Object data){
-		return defaultVisit(node, data);
+        SymbolNode nodo = (SymbolNode) data;
+        SymbolNode newNode = new SymbolNode(nodo);
+        tree.add(newNode);
+
+        System.out.println(node.jjtGetChild(0));
+        // expr
+        String expr = (String) node.jjtGetChild(0).jjtAccept(this, nodo).toString();
+        // block
+        String block = (String) node.jjtGetChild(1).jjtAccept(this, nodo).toString();
+
+        typeCheck(nodo, expr, "BOOLEAN");
+
+        ArrayList<Object> datos = new ArrayList<Object>();
+        String mapa = "IF";
+        datos.add(mapa);
+        datos.add(newNode);
+
+        node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, datos);
+		return 0;
 	}
 	public Object visit(ASTFOR node, Object data){
         SymbolNode nodo = (SymbolNode) data;
+        SymbolNode newNode = new SymbolNode(nodo);
+        tree.add(newNode);
         // id
         String id = (String) node.jjtGetChild(0).jjtAccept(this, null).toString();
         // expr
@@ -365,7 +402,14 @@ public class Semantico implements ParserVisitor
         typeCheck(nodo, id, "INT");
         typeCheck(nodo, initialExpr, "INT");
         typeCheck(nodo, endingExpr, "INT");
-        node.jjtGetChild(3).jjtAccept(this, "FOR");
+
+        ArrayList<Object> datos = new ArrayList<Object>();
+        String mapa = "FOR";
+        datos.add(mapa);
+        datos.add(newNode);
+
+        node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, datos);
+
 		return 0;
 	}
 	public Object visit(ASTRETURN node, Object data){
