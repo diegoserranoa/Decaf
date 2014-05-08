@@ -370,10 +370,16 @@ public class Semantico implements ParserVisitor
 		return "RETURN";
 	}
 	public Object visit(ASTBREAK node, Object data){
-		return defaultVisit(node, data);
+        if (!data.equals("FOR")){
+            throw new RuntimeException("BREAK solo puede estar dentro de un ciclo FOR.");
+        }
+		return null;
 	}
 	public Object visit(ASTCONTINUE node, Object data){
-		return defaultVisit(node, data);
+        if (!data.equals("FOR")){
+            throw new RuntimeException("CONTINUE solo puede estar dentro de un ciclo FOR.");
+        }
+		return null;
 	}
 
     void addTempVar(String id, String type){
