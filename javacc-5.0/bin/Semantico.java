@@ -4,23 +4,13 @@ public class Semantico implements ParserVisitor
 {
 	public HashMap<String, Map<String, Object>> simbolos;
     public HashMap<String, Map<String, Object>> tempSimbolos;
+    public ArrayList<SymbolNode> tree;
     public HashMap<String, Method> methods;
 
 
     public int varTempCounter;
     public int lineNumber;
-    public int labels;
-   
-
-	private class Map<Type, Value>{
-        public Type type;
-        public Value value;
-        
-        public Map(Type type, Value value){
-            this.type = type;
-            this.value = value;
-        }
-    }
+    public int labels;   
 
 	private class Method{
         public String type;
@@ -41,6 +31,9 @@ public class Semantico implements ParserVisitor
 		this.simbolos = new HashMap<>();
         this.methods = new HashMap<>();
         this.tempSimbolos = new HashMap<>();
+        this.tree = new ArrayList<SymbolNode>();
+        SymbolNode root = new SymbolNode(null);
+        this.tree.add(root);
         this.varTempCounter = 0;
         this.lineNumber = 0;
         this.labels = 0;
@@ -49,30 +42,33 @@ public class Semantico implements ParserVisitor
 	public void tablaSimbolos(){
     	System.out.println("Simbolos");
 		// Variables globales
-		Set<String> keys = this.simbolos.keySet();
-		Iterator<String> e = keys.iterator();
-    	while(e.hasNext()){
-			Object nextElement = e.next();
-    		System.out.print("< " + nextElement + " , ");
-    		Map mapa = this.simbolos.get(nextElement);
-    		System.out.print("< " + mapa.type + " , ");
-    		if (mapa.value instanceof int[]){
-    			System.out.print("int[" + ((int[])mapa.value).length + "]>");
-    			// hacer for e imprimir valores del arreglo
-    		} else if (mapa.value instanceof boolean[]){
-    			System.out.print("boolean[" + ((boolean[])mapa.value).length + "]>");
-    			// hacer for e imprimir valores del arreglo
-    		} else {
-    			System.out.print(mapa.value.toString() + ">");
-    		}
-    		System.out.print(">");
-    		System.out.println("");
-		}
+        for(SymbolNode i : tree) {
+            Set<String> keys = i.simbolos.keySet();
+            Iterator<String> e = keys.iterator();
+            while(e.hasNext()){
+                Object nextElement = e.next();
+                System.out.print("< " + nextElement + " , ");
+                Map mapa = i.simbolos.get(nextElement);
+                System.out.print("< " + mapa.type + " , ");
+                if (mapa.value instanceof int[]){
+                    System.out.print("int[" + ((int[])mapa.value).length + "]>");
+                    // hacer for e imprimir valores del arreglo
+                } else if (mapa.value instanceof boolean[]){
+                    System.out.print("boolean[" + ((boolean[])mapa.value).length + "]>");
+                    // hacer for e imprimir valores del arreglo
+                } else {
+                    System.out.print(mapa.value.toString() + ">");
+                }
+                System.out.print(">");
+                System.out.println("");
+            }
 
 
-		System.out.println("--------------------------------------");
-		System.out.println("");
-		System.out.println("");
+            System.out.println("--------------------------------------");
+            System.out.println("");
+            System.out.println("");
+        }
+        
 		tablaMetodos();
 
 	}
@@ -191,9 +187,9 @@ public class Semantico implements ParserVisitor
                 }
             }
             
-            boolean keyDoesExist = this.simbolos.containsKey(id);
+            boolean keyDoesExist = this.tree.get(0).simbolos.containsKey(id);
             if( !keyDoesExist ){
-                this.simbolos.put(id, symbol);
+                this.tree.get(0).simbolos.put(id, symbol);
             }else{
                 throw new RuntimeException("ID  " + id + " ya existe.");
             }
@@ -220,8 +216,12 @@ public class Semantico implements ParserVisitor
         return (int) node.jjtGetChild(0).jjtAccept(this, null);
 	}
 	public Object visit(ASTMETHOD_DECLARATION node, Object data){
+
         boolean mainMethodExists = methods.containsKey("main");
         if (!mainMethodExists){
+            // Nuevo nodo en el arbol de los simbolos
+            // El padre es el root
+            SymbolNode newNode = new SymbolNode(this.tree.get(0));
             Method method = new Method();
             method.type = (String) node.jjtGetChild(0).jjtAccept(this, null);
             String idMethod = (String) node.jjtGetChild(1).jjtAccept(this, null);
@@ -252,9 +252,13 @@ public class Semantico implements ParserVisitor
             }else{
                 throw new RuntimeException("Method ID " + idMethod + " ya existe.");
             }
-            Map <String, String> mapa = new Map<>("METHOD", method.type);
 
-            node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, mapa);
+            ArrayList<Object> datos = new ArrayList<Object>();
+            Map <String, String> mapa = new Map<>("METHOD", method.type);
+            datos.add(datos);
+            datos.add(newNode);
+
+            node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, datos);
         }
         return 0;
 	}
@@ -262,38 +266,46 @@ public class Semantico implements ParserVisitor
 		return "VOID";
 	}
 	public Object visit(ASTBLOCK node, Object data){
-
-        if (data instanceof Map) {
-            if (((Map)data).type == "METHOD"){
-                if (((Map)data).value == "INT"){
-                    boolean hasReturn = false;
-                    if( node.jjtGetNumChildren() > 0 ){
-                        int i = 0;
-                        while( i < node.jjtGetNumChildren() ){
-                            String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
-                            if ( true || child.equals("RETURN")){
-                                hasReturn = true;
-                                break;
+        if (data instanceof ArrayList){
+            if (node.jjtGetNumChildren() > 0){
+                if(node.jjtGetChild(0).equals("VARIABLE_DECLARATION")){
+                    SymbolNode nodo = (SymbolNode) ((ArrayList)data).get(1);   
+                    node.jjtGetChild(0).jjtAccept(this, nodo);
+                }
+            }
+            if (((ArrayList)data).get(0) instanceof Map) {
+                if (((Map)data).type == "METHOD"){
+                    if (((Map)data).value == "INT"){
+                        boolean hasReturn = false;
+                        if( node.jjtGetNumChildren() > 0 ){
+                            int i = 0;
+                            while( i < node.jjtGetNumChildren() ){
+                                String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
+                                if (child.equals("RETURN")){
+                                    hasReturn = true;
+                                    break;
+                                }
+                                i++;
                             }
-                            i++;
-                        }
-                        if (!hasReturn){
+                            if (!hasReturn){
+                                throw new RuntimeException ("El metodo debe tener un return.");
+                            }
+                        } else {
                             throw new RuntimeException ("El metodo debe tener un return.");
                         }
-                    } else {
-                        throw new RuntimeException ("El metodo debe tener un return.");
                     }
                 }
             }
-        }
+        } 
         else if (data instanceof String){
             if (data.equals("FOR")){
             }
         }
-		return defaultVisit(node, data);
+		return 0;
 	}
 
 	public Object visit(ASTVARIABLE_DECLARATION node, Object data){
+        SymbolNode nodo = (SymbolNode)data;
 		String type = (String) node.jjtGetChild(0).jjtAccept(this, null);
         Map<String, Object> symbol;
         String id;
@@ -316,9 +328,9 @@ public class Semantico implements ParserVisitor
                     }
             }
             
-            boolean keyDoesExist = this.simbolos.containsKey(id);
+            boolean keyDoesExist = nodo.simbolos.containsKey(id);
             if( !keyDoesExist ){
-                this.simbolos.put(id, symbol);
+                nodo.simbolos.put(id, symbol);
             }else{
                 throw new RuntimeException("ID " + id + " ya existe.");
             }

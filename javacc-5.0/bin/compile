@@ -1,10 +1,14 @@
 #!/bin/sh
 
 mv Semantico.java Semantico.temp
+mv SymbolNode.java SymbolNode.temp
+mv Map.java Map.temp
 rm *.java
 rm *.class
 rm *.jj
 mv Semantico.temp Semantico.java
+mv SymbolNode.temp SymbolNode.java
+mv Map.temp Map.java
 ./jjtree Parser.jjt
 ./javacc Parser.jj
 javac *.java

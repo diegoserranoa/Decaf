@@ -4,6 +4,7 @@ class Program {
   boolean bool;
 
   int hola(int a, boolean b, int c){
+    int z;
     return 5 + 5;
   }
 
