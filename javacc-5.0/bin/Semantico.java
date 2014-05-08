@@ -365,7 +365,6 @@ public class Semantico implements ParserVisitor
         typeCheck(nodo, id, "INT");
         typeCheck(nodo, initialExpr, "INT");
         typeCheck(nodo, endingExpr, "INT");
-
         node.jjtGetChild(3).jjtAccept(this, "FOR");
 		return 0;
 	}
@@ -477,12 +476,14 @@ public class Semantico implements ParserVisitor
         //System.out.println("rightChild: " + rightChild);
 
         */
-        if (idExist(nodo, leftChild) == null){
+        SymbolNode n = idExist(nodo, leftChild);
+        if (n == null){
             throw new RuntimeException("ID " + leftChild + " no ha sido declarado.");
         }
-        
+        String type = n.simbolos.get(leftChild).type;
+        n = idExist(nodo, rightChild);
         if (!tempSimbolos.containsKey(rightChild)){
-            typeCheck(nodo, rightChild, this.simbolos.get(leftChild).type);
+            typeCheck(n, rightChild, type);
         }
 
         printCode(leftChild + " = " + rightChild);
