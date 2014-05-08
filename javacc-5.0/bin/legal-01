@@ -1,9 +1,9 @@
 class Program {
   int a, b, c, d;
+  boolean bool;
 
   void main(){
-  	a = 2 + c + b;
-  	b = 1 + 1;
-  	d = a - b * c;
+  	a = c + b;
+  	bool = a;
   }
 }
