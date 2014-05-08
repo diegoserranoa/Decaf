@@ -321,7 +321,16 @@ public class Semantico implements ParserVisitor
                     }
                 }
             }
-        } 
+        } else {
+            // Block
+            SymbolNode newNode = new SymbolNode((SymbolNode)data);
+            tree.add(newNode);
+            int i = 0;
+            while (i < node.jjtGetNumChildren()){
+                node.jjtGetChild(i).jjtAccept(this, newNode);
+                i++;
+            }
+        }
 		return 0;
 	}
 
@@ -372,11 +381,8 @@ public class Semantico implements ParserVisitor
         SymbolNode newNode = new SymbolNode(nodo);
         tree.add(newNode);
 
-        System.out.println(node.jjtGetChild(0));
         // expr
         String expr = (String) node.jjtGetChild(0).jjtAccept(this, nodo).toString();
-        // block
-        String block = (String) node.jjtGetChild(1).jjtAccept(this, nodo).toString();
 
         typeCheck(nodo, expr, "BOOLEAN");
 
