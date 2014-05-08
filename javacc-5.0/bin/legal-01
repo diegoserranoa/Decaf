@@ -14,4 +14,12 @@ class Program {
   		a = 10;
   	}
   }
+
+  int hola(){
+      return;
+  }
+
+  void noReturn(){
+      return;
+  }
 }

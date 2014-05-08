@@ -216,35 +216,37 @@ public class Semantico implements ParserVisitor
         return (int) node.jjtGetChild(0).jjtAccept(this, null);
 	}
 	public Object visit(ASTMETHOD_DECLARATION node, Object data){
-		Method method = new Method();
-        method.type = (String) node.jjtGetChild(0).jjtAccept(this, null);
-        String idMethod = (String) node.jjtGetChild(1).jjtAccept(this, null);
+        boolean mainMethodExists = methods.containsKey("main");
+        if (!mainMethodExists){
+            Method method = new Method();
+            method.type = (String) node.jjtGetChild(0).jjtAccept(this, null);
+            String idMethod = (String) node.jjtGetChild(1).jjtAccept(this, null);
         
-        // Existen parámetros
-        if( node.jjtGetNumChildren() > 3 ){
-            int i = 2;
-            while( i + 1 < node.jjtGetNumChildren() ){
-                String typeParameter = (String) node.jjtGetChild(i).jjtAccept(this, null);
-                String idParameter = (String) node.jjtGetChild(i+1).jjtAccept(this, null);
-                
-                boolean idParameterDoesExist = method.parameters.containsKey(idParameter);
-                if( !idParameterDoesExist ){
-                    method.parameters.put(idParameter, typeParameter);
-                }else{
-                    throw new RuntimeException("ID" + idParameter + " ya existe.");
+            // Existen parámetros
+            if( node.jjtGetNumChildren() > 3 ){
+                int i = 2;
+                while( i + 1 < node.jjtGetNumChildren() ){
+                    String typeParameter = (String) node.jjtGetChild(i).jjtAccept(this, null);
+                    String idParameter = (String) node.jjtGetChild(i+1).jjtAccept(this, null);
+                    
+                    boolean idParameterDoesExist = method.parameters.containsKey(idParameter);
+                    if( !idParameterDoesExist ){
+                        method.parameters.put(idParameter, typeParameter);
+                    }else{
+                        throw new RuntimeException("ID" + idParameter + " ya existe.");
+                    }
+                    
+                    i += 2;
                 }
-                
-                i += 2;
+            }
+            
+            boolean idMethodDoesExist = methods.containsKey(idMethod);
+            if( !idMethodDoesExist ){
+                methods.put(idMethod, method);
+            }else{
+                throw new RuntimeException("Method ID " + idMethod + " ya existe.");
             }
         }
-        
-        boolean idMethodDoesExist = methods.containsKey(idMethod);
-        if( !idMethodDoesExist ){
-            methods.put(idMethod, method);
-        }else{
-            throw new RuntimeException("Method ID " + idMethod + " ya existe.");
-        }
-        
         return defaultVisit(node, data);
 	}
 	public Object visit(ASTTYPE_VOID node, Object data){
