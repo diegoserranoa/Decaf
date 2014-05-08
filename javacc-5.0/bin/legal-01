@@ -3,6 +3,10 @@ class Program {
   int e[5];
   boolean bool;
 
+  int hola(int a){
+      return;
+  }
+
   void main(){
   	a = c + b + d;
   	bool = false;
@@ -13,11 +17,11 @@ class Program {
   	if (true || bool){
   		a = 10;
   	}
+
+    hola(a);
   }
 
-  int hola(){
-      return;
-  }
+  
 
   void noReturn(){
       return;

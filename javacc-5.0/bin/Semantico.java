@@ -253,6 +253,7 @@ public class Semantico implements ParserVisitor
 		return "VOID";
 	}
 	public Object visit(ASTBLOCK node, Object data){
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTVARIABLE_DECLARATION node, Object data){
@@ -368,6 +369,48 @@ public class Semantico implements ParserVisitor
         return defaultVisit(node, data);
 	}
 	public Object visit(ASTMETHOD_CALL node, Object data){
+        String leftChild = (String) node.jjtGetChild(0).jjtAccept(this, data);        
+        boolean methodExists = methods.containsKey(leftChild);
+        
+        // TODO: se puede llamar al metodo main? 
+        if (methodExists){
+            Method mapa = this.methods.get(leftChild);
+            int parameters = 0;
+            Set<String> keysParameters = mapa.parameters.keySet();
+            if(!keysParameters.isEmpty()){
+                Iterator<String> itParameters = keysParameters.iterator();
+                while(itParameters.hasNext()){
+                    String keyParameter = itParameters.next();
+                    String typeParameter = mapa.parameters.get(keyParameter);
+                    parameters++;
+                }
+            }
+
+            // Existen parámetros
+            System.out.println(node.jjtGetNumChildren());
+            if(node.jjtGetNumChildren() - 1  == parameters){
+                int i = 1;
+                while( i + 1 < node.jjtGetNumChildren() ){
+                    String idParameter = (String) node.jjtGetChild(i).jjtAccept(this, null);
+                    
+                    boolean idParameterDoesExist = mapa.parameters.containsKey(idParameter);
+                    if( !idParameterDoesExist ){
+                        mapa.parameters.put(idParameter, typeParameter);
+                    }else{
+                        throw new RuntimeException("ID" + idParameter + " ya existe.");
+                    }
+                    
+                    i++;
+                }
+            } else {
+                throw new RuntimeException("El metodo " + leftChild + " recibe " + parameters + " parámetro(s).");
+            }
+
+
+        } else {
+            throw new RuntimeException("El metodo " + leftChild + " no existe.");
+        }
+
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTCALLOUT node, Object data){
