@@ -1,0 +1,360 @@
+options {
+	//DEBUG_PARSER = false;
+	DEBUG_LOOKAHEAD = false;
+	VISITOR = true;
+	MULTI = true;
+
+}
+
+PARSER_BEGIN(Parser)
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+public class Parser {
+	static boolean DEBUG_PARSER = false;
+	public static void main(String[] args) {
+		Parser parser;
+		SimpleNode  root = null;
+		try {
+				FileInputStream file = null;
+				try{
+					file = new FileInputStream(args[0]);
+					if(file != null){
+						parser = new Parser(file);
+						parser.start();
+						System.out.println("Successful parsing.");
+						
+						root = (SimpleNode) parser.jjtree.rootNode();
+						root.dump("");
+						
+						try{
+							Semantico semantico = new Semantico();
+							root.jjtAccept(semantico, null);
+							semantico.tablaSimbolos();
+
+						} catch (Throwable e){
+							System.out.println("Error: " + e.getMessage());
+						}
+					}
+				} catch (Throwable e) {
+					System.out.println("Error: " + e.getMessage());
+				}
+		} catch (Throwable e) {
+			System.out.println("Syntax Error: " + e.getMessage());
+		}
+	}
+}
+
+PARSER_END(Parser)
+
+SKIP:
+{
+	<"//"(["a"-"z","A"-"Z","0"-"9",".",",","!","@","#","$","%","^","&","*","(",")","_","-","+","=",";",":","\""," "])*("\n" | "\r" | "\r\n")>
+|	" "
+|	"\t"
+|	"\n"
+|	"\r"
+|	"\f"
+}
+
+TOKEN:
+{
+	<TOK_BOOLEAN: "boolean">
+|	<TOK_BREAK: "break">
+|	<TOK_CALLOUT: "callout">
+|	<TOK_CLASS: "class">
+|	<TOK_CONTINUE: "continue">
+|	<TOK_ELSE: "else">
+|	<TOK_FALSE: "false">
+|	<TOK_FOR: "for">
+|	<TOK_IF: "if">
+|	<TOK_INT: "int">
+|	<TOK_RETURN: "return">
+|	<TOK_TRUE: "true">
+|	<TOK_VOID: "void">
+|	<TOK_PROGRAM: "Program">
+|	<TOK_STRING_LITERAL: <TOK_DOUBLE_QUOTE> (<CHARACTER>)* <TOK_DOUBLE_QUOTE> >
+|	<CHARACTER_LITERAL: <TOK_QUOTE> (<CHARACTER>)* <TOK_QUOTE> >
+|	<TOK_NOT: "!">
+|	<TOK_PLUS: "+">
+|	<TOK_MINUS: "-">
+|	<TOK_MULTIPLY: "*">
+|	<TOK_DIVIDE: "/">
+|	<TOK_MODULE: "%">
+|	<TOK_LESSER: "<">
+|	<TOK_GREATER: ">">
+|	<TOK_LESSER_OR_EQUAL: "<=">
+|	<TOK_GREATER_OR_EQUAL: ">=">
+|	<TOK_EQUAL_EQUAL: "==">
+|	<TOK_NOT_EQUAL: "!=">
+|	<TOK_AND: "&&">
+|	<TOK_OR: "||">
+|	<TOK_ASSIGN: "=">
+|	<TOK_ADD_ASIGN: "+=">
+|	<TOK_SUB_ASSIGN: "-=">
+|	<TOK_COMMA: ",">
+|	<TOK_DOT: ".">
+|	<TOK_LEFT_PAREN: "(">
+|	<TOK_RIGHT_PAREN: ")">
+|	<TOK_LEFT_BRACKET: "[">
+|	<TOK_RIGHT_BRACKET: "]">
+|	<TOK_LEFT_BRACE: "{">
+|	<TOK_RIGHT_BRACE: "}">
+|	<TOK_SEMICOLON: ";">
+|	<TOK_QUOTE:  "'">
+|	<TOK_DOUBLE_QUOTE: "\"">
+|	<TOK_SCAPED_QUOTE: "\\\'">
+|	<TOK_SCAPED_DOUBLE_QUOTE: "\\\"">
+|	<TOK_SCAPED_SLASH: "\\\\">
+|	<ID: <TOK_LETTER> (<TOK_LETTER>|<TOK_DIGIT>)* >
+|	<TOK_LETTER: ["a"-"z","A"-"Z","_"]>
+|	<#TOK_DIGIT: ["0"-"9"]>
+|	<TOK_HEX: "0x" (["0"-"9","a"-"f","A"-"F"])+>
+|	<TOK_NUMBERS: <TOK_DIGIT>(<TOK_DIGIT>)*>
+|	<#CHARACTER: <ALPHANUM>|<TOK_SYMBOL>|<SCAPED_CHARACTER>|<SLASH>|<TOK_HEX> > 
+|	<ALPHANUM: <TOK_DIGIT> | <TOK_LETTER > >
+|	<SCAPED_CHARACTER: <SLASH>(<TOK_QUOTE>|<TOK_DOUBLE_QUOTE>|<SLASH>) >
+|	<#SLASH: "\\">
+|	<TOK_SYMBOL: [" ","!","#","$","%","&","(",")","*","+",",","-",".","/",":",";","<","=",">","?","@","[","]","^","{","|","}","~","`"]>
+}
+
+void start() #void:
+{}
+{
+	program() <EOF>
+}
+
+void program() #PROGRAM:
+{}
+{
+	<TOK_CLASS> <TOK_PROGRAM> <TOK_LEFT_BRACE> (LOOKAHEAD(3) field_decl())*  (method_decl())* <TOK_RIGHT_BRACE>
+}
+
+void field_decl() #GLOBAL_DECLARATION: 
+{}
+{
+	type() field_decl_unit() (<TOK_COMMA> field_decl_unit() )* <TOK_SEMICOLON>
+}
+
+void field_decl_unit() #DECLARATION:
+{}
+{
+	identifyer() (<TOK_LEFT_BRACKET> (int_literal() #ID_SIZE) <TOK_RIGHT_BRACKET>)?
+}
+
+
+void method_decl() #METHOD_DECLARATION: 
+{}
+{
+	(type() | <TOK_VOID> #TYPE_VOID) identifyer() <TOK_LEFT_PAREN> (type() identifyer() (<TOK_COMMA> type() identifyer())*)? <TOK_RIGHT_PAREN> block()
+}
+
+void block() #BLOCK: 
+{}
+{
+	<TOK_LEFT_BRACE> (var_decl())* (statement())* <TOK_RIGHT_BRACE>
+}
+
+void var_decl() #VARIABLE_DECLARATION: 
+{}
+{
+	type() identifyer() (<TOK_COMMA> identifyer())* <TOK_SEMICOLON>
+}
+
+void type() #void: 
+{}
+{
+	<TOK_INT> #TYPE_INT
+|	<TOK_BOOLEAN> #TYPE_BOOLEAN
+}
+
+void statement() #void: 
+{}
+{	LOOKAHEAD(3)
+	assignment()
+|	method_call() <TOK_SEMICOLON>
+|	(<TOK_IF> <TOK_LEFT_PAREN> expr() <TOK_RIGHT_PAREN> block() (<TOK_ELSE> block())?) #IF
+|	(<TOK_FOR> identifyer() <TOK_ASSIGN> expr() <TOK_COMMA> expr() block()) #FOR
+|	(<TOK_RETURN> (expr())? <TOK_SEMICOLON>) #RETURN
+|	(<TOK_BREAK> <TOK_SEMICOLON>) #BREAK
+|	(<TOK_CONTINUE> <TOK_SEMICOLON>) #CONTINUE
+|	block()
+}
+
+void assignment() #void:
+{}
+{
+	(location() 
+	( (<TOK_ASSIGN> expr() #ASSIGN(2)) | (<TOK_ADD_ASIGN> expr() #ADD_ASSIGN(2)) | (<TOK_SUB_ASSIGN> expr() #SUB_ASSIGN(2)) )
+	<TOK_SEMICOLON> 		)
+}
+
+void method_call() #void: 
+{}
+{
+	(method_name() <TOK_LEFT_PAREN> (expr() (<TOK_COMMA> expr())*)? <TOK_RIGHT_PAREN>) #METHOD_CALL 
+|	(<TOK_CALLOUT> <TOK_LEFT_PAREN> string_literal() (<TOK_COMMA> callout_arg())* <TOK_RIGHT_PAREN>) #CALLOUT
+}
+
+void method_name() #void: 
+{}
+{
+	identifier() 
+}
+
+void location() #void: 
+{}
+{	LOOKAHEAD(3)
+	(identifier() <TOK_LEFT_BRACKET> expr() <TOK_RIGHT_BRACKET> #LOCATION_OFFSET(2))
+|	identifier()
+}
+
+void expr() #void:
+{}
+{
+	expr_conditional_and()
+	(
+		(<TOK_OR> expr_conditional_and() #OR(2))
+	)*
+}
+
+void expr_conditional_and() #void:
+{}
+{
+	expr_equality()
+	(
+		(<TOK_AND> expr_equality() #AND(2))
+	)* 
+}
+
+void expr_equality() #void:
+{}
+{
+	expr_relational()
+	(
+		(<TOK_EQUAL_EQUAL> expr_relational() #EQUAL(2))
+	|	(<TOK_NOT_EQUAL> expr_relational() #NOT_EQUAL(2))
+	)*
+}
+
+void expr_relational() #void:
+{}
+{
+	expr_addition_subtraction()
+	(
+		(<TOK_GREATER> expr_addition_subtraction() #GREATER(2))
+	|	(<TOK_GREATER_OR_EQUAL> expr_addition_subtraction() #GREATER_OR_EQUAL(2))
+	|	(<TOK_LESSER> expr_addition_subtraction() #LESSER(2))
+	|	(<TOK_LESSER_OR_EQUAL> expr_addition_subtraction() #LESSER_OR_EQUAL(2))
+	)*
+}
+
+void expr_addition_subtraction() #void:
+{}
+{
+	expr_mult_div_remainder()
+	(
+		(<TOK_PLUS> expr_mult_div_remainder() #PLUS(2))
+	|	(<TOK_MINUS> expr_mult_div_remainder() #MINUS(2))
+	)*
+}
+
+void expr_mult_div_remainder() #void:
+{}
+{
+	expr_logical_not()
+	(
+		(<TOK_MULTIPLY> expr_logical_not() #TIMES(2))
+	|	(<TOK_DIVIDE> expr_logical_not() #OVER(2))
+	|	(<TOK_MODULE> expr_logical_not() #MODULE(2))
+	)*
+}
+
+void expr_logical_not() #void:
+{}
+{
+	<TOK_NOT> expr_unary_minus() #LOGICAL_NOT(1)
+|	expr_unary_minus()
+}
+
+void expr_unary_minus() #void:
+{}
+{
+	<TOK_MINUS> prime() #UNARY_MINUS(1)
+|	prime()
+}
+
+void location_or_method_call() #void:
+{}
+{
+	LOOKAHEAD(2)
+	method_call()
+|	location()
+}
+
+void prime() #void: 
+{}
+{	
+	location_or_method_call()
+|	literal()
+|	<TOK_LEFT_PAREN> expr() <TOK_RIGHT_PAREN> 
+}
+
+void callout_arg() #void: 
+{}	
+{
+	LOOKAHEAD(2)
+	expr() | string_literal()	
+}
+
+void literal() #void: 
+{}	
+{	LOOKAHEAD(2)
+	int_literal() | char_literal() | bool_literal()
+}
+
+void identifier() #ID: 
+{ Token token; }
+{
+	token = <ID> { jjtThis.value = token.image; }
+}
+
+void int_literal() #void: 
+{}	
+{	LOOKAHEAD(3)
+	decimal_literal() | hex_literal()
+}
+
+void decimal_literal() #DECIMAL_LITERAL: 
+{ Token token; }
+{
+	token = <TOK_NUMBERS> { jjtThis.value = token.image; System.out.println("DECIMAL:" + jjtThis.value);}
+}
+
+void hex_literal()	#HEX_LITERAL: 
+{ Token token; }
+{
+	token = <TOK_HEX> { jjtThis.value = token.image; System.out.println("HEX:" + jjtThis.value);}
+}
+
+void bool_literal() #BOOL_LITERAL: 
+{ Token token; }
+{
+	token = <TOK_TRUE> { jjtThis.value = token.image; System.out.println("BOOL:" + jjtThis.value); }
+| 	token = <TOK_FALSE> { jjtThis.value = token.image; System.out.println("BOOL:" + jjtThis.value); }
+}
+
+void char_literal() #CHARACTER_LITERAL: 
+{ Token token; }
+{
+	token =  <CHARACTER_LITERAL> { jjtThis.value = token.image; System.out.println("CHAR:" + jjtThis.value); }
+}
+
+void string_literal() #STRING_LITERAL: 
+{ Token token; }
+{
+	token = <TOK_STRING_LITERAL> { jjtThis.value = token.image; System.out.println("STRING:" + jjtThis.value); }
+}
+
