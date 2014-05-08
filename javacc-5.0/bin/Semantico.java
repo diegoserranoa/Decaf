@@ -129,7 +129,21 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTPROGRAM node, Object data){
-		return defaultVisit(node, data);
+        node.childrenAccept(this, data);
+        boolean hasMain = false;
+        Set<String> keys = this.methods.keySet();
+        Iterator<String> e = keys.iterator();
+        while(e.hasNext()){
+            Object nextElement = e.next();
+            if (nextElement.equals("main")){
+                hasMain = true;
+                break;
+            }
+        }
+        if (!hasMain){
+            throw new RuntimeException ("El programa no tiene medoto main");
+        }
+		return true;
 	}
 	public Object visit(ASTGLOBAL_DECLARATION node, Object data){
 		String type = (String) node.jjtGetChild(0).jjtAccept(this, null);
