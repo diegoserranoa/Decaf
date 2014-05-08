@@ -222,6 +222,7 @@ public class Semantico implements ParserVisitor
             // Nuevo nodo en el arbol de los simbolos
             // El padre es el root
             SymbolNode newNode = new SymbolNode(this.tree.get(0));
+            tree.add(newNode);
             Method method = new Method();
             method.type = (String) node.jjtGetChild(0).jjtAccept(this, null);
             String idMethod = (String) node.jjtGetChild(1).jjtAccept(this, null);
@@ -268,7 +269,7 @@ public class Semantico implements ParserVisitor
 	public Object visit(ASTBLOCK node, Object data){
         if (data instanceof ArrayList){
             if (node.jjtGetNumChildren() > 0){
-                if(node.jjtGetChild(0).equals("VARIABLE_DECLARATION")){
+                if(node.jjtGetChild(0).toString().equals("VARIABLE_DECLARATION")){
                     SymbolNode nodo = (SymbolNode) ((ArrayList)data).get(1);   
                     node.jjtGetChild(0).jjtAccept(this, nodo);
                 }
@@ -336,7 +337,7 @@ public class Semantico implements ParserVisitor
             }
         }
         
-        return defaultVisit(node, data);
+        return 0;
     }
 
     
