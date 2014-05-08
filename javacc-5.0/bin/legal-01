@@ -8,8 +8,12 @@ class Program {
   }
 
   void main(){
-    a = c + b + d;
-  	bool = false;
+
+    for a = 5 + 1, 10 {
+      b = 1;
+    }
+
+    bool = false;
   	if (5 < 10){
   		a = 5;
   	}

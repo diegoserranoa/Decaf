@@ -263,25 +263,31 @@ public class Semantico implements ParserVisitor
 	}
 	public Object visit(ASTBLOCK node, Object data){
 
-        if (((Map)data).type == "METHOD"){
-            if (((Map)data).value == "INT"){
-                boolean hasReturn = false;
-                if( node.jjtGetNumChildren() > 0 ){
-                    int i = 0;
-                    while( i < node.jjtGetNumChildren() ){
-                        String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
-                        if ( true || child.equals("RETURN")){
-                            hasReturn = true;
-                            break;
+        if (data instanceof Map) {
+            if (((Map)data).type == "METHOD"){
+                if (((Map)data).value == "INT"){
+                    boolean hasReturn = false;
+                    if( node.jjtGetNumChildren() > 0 ){
+                        int i = 0;
+                        while( i < node.jjtGetNumChildren() ){
+                            String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
+                            if ( true || child.equals("RETURN")){
+                                hasReturn = true;
+                                break;
+                            }
+                            i++;
                         }
-                        i++;
-                    }
-                    if (!hasReturn){
+                        if (!hasReturn){
+                            throw new RuntimeException ("El metodo debe tener un return.");
+                        }
+                    } else {
                         throw new RuntimeException ("El metodo debe tener un return.");
                     }
-                } else {
-                    throw new RuntimeException ("El metodo debe tener un return.");
                 }
+            }
+        }
+        else if (data instanceof String){
+            if (data.equals("FOR")){
             }
         }
 		return defaultVisit(node, data);
@@ -332,10 +338,26 @@ public class Semantico implements ParserVisitor
 		return defaultVisit(node, data);
 	}
 	public Object visit(ASTFOR node, Object data){
-		return defaultVisit(node, data);
+        // id
+        String id = (String) node.jjtGetChild(0).jjtAccept(this, null).toString();
+        // expr
+        String initialExpr = (String) node.jjtGetChild(1).jjtAccept(this, null).toString();
+        // expr
+        String endingExpr = (String) node.jjtGetChild(2).jjtAccept(this, null).toString();
+
+        typeCheck(id, "INT");
+        typeCheck(initialExpr, "INT");
+        typeCheck(endingExpr, "INT");
+
+        node.jjtGetChild(3).jjtAccept(this, "FOR");
+		return 0;
 	}
 	public Object visit(ASTRETURN node, Object data){
-        if (node.jjtGetNumChildren() > 0){
+        if (data.equals("VOID")){
+            if (node.jjtGetNumChildren() != 0){
+                throw new RuntimeException("Metodo de tipo VOID. Return no debe regresar un valor.");
+            }
+        } else if (node.jjtGetNumChildren() > 0){
             String child = (String)node.jjtGetChild(0).jjtAccept(this, null).toString();
             if (data.equals("INT")){
                 typeCheck(child, "INT");
@@ -439,6 +461,9 @@ public class Semantico implements ParserVisitor
         if(!idDoesExist){
             throw new RuntimeException("Id " + id + " no ha sido declarado.");
         }
+
+        typeCheck(id, "INT");
+
         
         return defaultVisit(node, data);
 	}
@@ -448,6 +473,8 @@ public class Semantico implements ParserVisitor
         if(!idDoesExist){
             throw new RuntimeException("Id " + id + " no ha sido declarado.");
         }
+
+        typeCheck(id, "INT");
         
         return defaultVisit(node, data);
 	}
@@ -731,6 +758,8 @@ public class Semantico implements ParserVisitor
 	public Object visit(ASTLOGICAL_NOT node, Object data){
 		String child    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         
+        typeCheck(child, "BOOL");
+
         varTempCounter++;
         printCode("t"+varTempCounter + " = !" + child);
         return "t"+varTempCounter;
