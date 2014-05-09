@@ -3,44 +3,8 @@ class Program {
   int e[5];
   boolean bool;
 
-  int hola(int a, boolean b, int c){
-    int z, y;
-    boolean chao;
-    if (z == z && z == z){
-      int z;
-    }
-    return 5 + 5;
-  }
-
   void main(){
-    int foo;
-    a = b - c * d / foo;
-
-    {
-      int foo;
-    }
-
-    bool = false;
-
-    if (z == z && z == z){
-      int z;
-      a = 5;
-    }
-
-    for a = 5 , 10 {
-      int a;
-      b = 5;
-    }
-
-  	if (5 < 10){
-  		a = 5;
-  	}
-
-  	if (true || bool){
-  		a = 5;
-  	}
-
-    hola(5, true, a);
+    a = 5;
   }
 
   
