@@ -985,13 +985,13 @@ public class Semantico implements ParserVisitor
 
                 // checar su tipo, debe de ser INT
                 Map id = n.simbolos.get(s);
-                if (!"INT[]".equals(id.type)) {
+                if (!"INT".equals(id.type)) {
                     throw new RuntimeException("ID " + s + " no es de tipo INT.");
                 }
 
             } else {
                 Map id = this.tempSimbolos.get(s);
-                if (!"INT[]".equals(id.type)) {
+                if (!"INT".equals(id.type)) {
                     throw new RuntimeException("Expresion no da resultado un INT.");
                 }
             }
