@@ -1,16 +1,42 @@
 class Program {
-  int a, b, c, d;
-  int e[5];
-  boolean bool;
+  int A[100];
+  int length;
 
-  void main(){
-    a = 5;
+  int partition(int p, int r) {
+    int x, i, j, t;
+    int z;
+    x = A[p];
+    i = p - 1;
+    j = r + 1;
   }
 
-  
+  void quicksort(int p, int r)
+  {
+    int q;
+        
+    if (p < r) {
+        q = partition (p, r);
+        quicksort (p, q);
+        quicksort (q+1, r);
+    }
+  }
 
-  void noReturn(){
+  void main() 
+  {
+    int temp;
+      
+    length = 10; // adjust for sort length
+      
+    callout("printf", "creating random array of %d elements\n", length);
+    
+    callout("srandom", 17);
+      
+    for i = 0, length {
+      temp = callout("random");
+      A[i] = temp;
+    }
+      
+    quicksort (0, length - 1);
 
-      return;
   }
 }

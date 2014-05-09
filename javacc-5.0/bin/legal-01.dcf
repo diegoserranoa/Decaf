@@ -7,12 +7,12 @@ class Program
     
     int partition(int p, int r) 
     {
-	int x, i, j, t;
-        int z;
+	     int x, i, j, t;
+       int z;
         
-	x = A[p];
-	i = p - 1;
-	j = r + 1;
+	     x = A[p];
+	     i = p - 1;
+	     j = r + 1;
 
   	for z = 0, length * length {
 	  j = j - 1;

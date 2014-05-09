@@ -12,7 +12,7 @@ mv Map.temp Map.java
 ./jjtree Parser.jjt
 ./javacc Parser.jj
 javac *.java
-java Parser legal-01.dcf
+java Parser legal-01
 # java Parser legal-01
 # java Parser illegal-01.dcf
 # java Parser illegal-02.dcf

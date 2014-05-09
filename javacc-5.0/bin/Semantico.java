@@ -223,6 +223,7 @@ public class Semantico implements ParserVisitor
             // El padre es el root
             SymbolNode newNode = new SymbolNode(this.tree.get(0));
             tree.add(newNode);
+
             Method method = new Method();
             method.type = (String) node.jjtGetChild(0).jjtAccept(this, null);
             String idMethod = (String) node.jjtGetChild(1).jjtAccept(this, null);
@@ -239,6 +240,27 @@ public class Semantico implements ParserVisitor
                     if( !idParameterDoesExist ){
                         method.parameters.put(idParameter, typeParameter);
                         method.parametersIndex.put(idParameter, index + "");
+
+                        String type = typeParameter;
+                        Map<String, Object> symbol;
+                        String id;
+                        id = idParameter;
+                        symbol = new Map<>(type, null);
+                        
+                        switch (type) {
+                            case "INT":
+                                {
+                                    symbol.value = "0";
+                                    break;
+                                }
+                            case "BOOL":
+                                {
+                                    symbol.value = "false";
+                                    break;
+                                }
+                        }
+
+                        newNode.simbolos.put(id, symbol);
                     }else{
                         throw new RuntimeException("ID" + idParameter + " ya existe.");
                     }
@@ -254,12 +276,16 @@ public class Semantico implements ParserVisitor
                 throw new RuntimeException("Method ID " + idMethod + " ya existe.");
             }
 
+            SymbolNode blockNode = new SymbolNode(newNode);
+            tree.add(blockNode);
+
             ArrayList<Object> datos = new ArrayList<Object>();
             Map <String, String> mapa = new Map<>("METHOD", method.type);
             datos.add(mapa);
-            datos.add(newNode);
+            datos.add(blockNode);
 
             node.jjtGetChild(node.jjtGetNumChildren() - 1).jjtAccept(this, datos);
+
         }
         return 0;
 	}
@@ -392,6 +418,26 @@ public class Semantico implements ParserVisitor
         tree.add(newNode);
         // id
         String id = (String) node.jjtGetChild(0).jjtAccept(this, null).toString();
+        String type = "INT";
+        Map<String, Object> symbol;
+        symbol = new Map<>(type, null);
+        
+        switch (type) {
+            case "INT":
+                {
+                    symbol.value = "0";
+                    break;
+                }
+            case "BOOL":
+                {
+                    symbol.value = "false";
+                    break;
+                }
+        }
+
+        newNode.simbolos.put(id, symbol);
+
+
         // expr
         String initialExpr = (String) node.jjtGetChild(1).jjtAccept(this, null).toString();
         // expr
@@ -482,14 +528,26 @@ public class Semantico implements ParserVisitor
         leftChild = (String) node.jjtGetChild(0).jjtAccept(this, nodo).toString();
         rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, nodo).toString();
         
+
         if (node.jjtGetChild(0).toString().equals("LOCATION_OFFSET")){
             leftChild = (String) node.jjtGetChild(0).jjtGetChild(0).jjtAccept(this, nodo).toString();
+        } 
+
+        if (node.jjtGetChild(1).toString().equals("CALLOUT")){
+            rightChild = (String) node.jjtGetChild(1).jjtAccept(this, nodo).toString();
+        } else if (node.jjtGetChild(1).toString().equals("METHOD_CALL")){
+
+            rightChild = (String) node.jjtGetChild(1).jjtAccept(this, nodo).toString();
+        } else if (node.jjtGetChild(1).toString().equals("LOCATION_OFFSET")){
+
+            rightChild = (String) node.jjtGetChild(1).jjtGetChild(0).jjtAccept(this, nodo).toString();
         } 
 
         SymbolNode n = idExist(nodo, leftChild);
         if (n == null){
             throw new RuntimeException("ID " + leftChild + " no ha sido declarado.");
         }
+
         String type = n.simbolos.get(leftChild).type;
         n = idExist(nodo, rightChild);
         if (!tempSimbolos.containsKey(rightChild)){
@@ -497,6 +555,7 @@ public class Semantico implements ParserVisitor
         } else {
             typeCheck(n, rightChild, type);
         }
+
         printCode(leftChild + " = " + rightChild);
         return 0;
 	}
@@ -591,7 +650,7 @@ public class Semantico implements ParserVisitor
             if(node.jjtGetNumChildren() - 1  == parameters){
                 int i = 1;
                 while(i < node.jjtGetNumChildren()){
-                    String idParameter = node.jjtGetChild(i).jjtAccept(this, null) + "";
+                    String idParameter = node.jjtGetChild(i).jjtAccept(this, nodo).toString();
 
                     // type check
                     typeCheck(nodo, idParameter, typeParameters[i - 1]);
@@ -605,10 +664,10 @@ public class Semantico implements ParserVisitor
             throw new RuntimeException("El metodo " + leftChild + " no existe.");
         }
 
-		return defaultVisit(node, data);
+		return 1;
 	}
 	public Object visit(ASTCALLOUT node, Object data){
-		return defaultVisit(node, data);
+		return 1;
 	}
 	public Object visit(ASTLOCATION_OFFSET node, Object data){
 		String id = (String) node.jjtGetChild(0).jjtAccept(this, data);
@@ -864,6 +923,7 @@ public class Semantico implements ParserVisitor
                     throw new RuntimeException("Tipo " + s + " encontrado. Se esperaba un tipo INT.");
             } else if (!tempSimbolos.containsKey(s)){
                 // es una variable
+
                 // checar si ya fue declarada
                 SymbolNode n = idExist(nodo, s);
                 if (n == null){
@@ -925,13 +985,13 @@ public class Semantico implements ParserVisitor
 
                 // checar su tipo, debe de ser INT
                 Map id = n.simbolos.get(s);
-                if (!"INT".equals(id.type)) {
+                if (!"INT[]".equals(id.type)) {
                     throw new RuntimeException("ID " + s + " no es de tipo INT.");
                 }
 
             } else {
                 Map id = this.tempSimbolos.get(s);
-                if (!"INT".equals(id.type)) {
+                if (!"INT[]".equals(id.type)) {
                     throw new RuntimeException("Expresion no da resultado un INT.");
                 }
             }
@@ -957,11 +1017,11 @@ public class Semantico implements ParserVisitor
         SymbolNode nodo = (SymbolNode) data;
 		String leftChild    = (String) node.jjtGetChild(0).jjtAccept(this, data).toString();
         String rightChild   = (String) node.jjtGetChild(1).jjtAccept(this, data).toString();
-
+        
         // typeCheck
         typeCheck(nodo, leftChild, "INT");
         typeCheck(nodo, rightChild, "INT");
-        
+
         varTempCounter++;
         String varTemp = "t"+varTempCounter;
         addTempVar(varTemp, "INT");
