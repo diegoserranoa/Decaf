@@ -278,15 +278,21 @@ public class Semantico implements ParserVisitor
                         while (i < node.jjtGetNumChildren()){
                             //if(node.jjtGetChild(i).toString().equals("VARIABLE_DECLARATION")){
                             SymbolNode nodo = (SymbolNode) ((ArrayList)data).get(1);
-                            node.jjtGetChild(i).jjtAccept(this, nodo);
+                            ArrayList<Object> datos = new ArrayList<Object>();
+                            String mapa = mapita.value.toString();
+                            datos.add(mapa);
+                            datos.add(nodo);
+                            String child = node.jjtGetChild(i).jjtAccept(this, datos).toString();
+                            if (child.equals("RETURN")){
+                            }
                             i++;
                         }
                     }
                     /*
-                    if (mapita.value == "INT"){
-                        boolean hasReturn = false;
-                        if( node.jjtGetNumChildren() > 0 ){
-                            int i = 0;
+                    boolean hasReturn = false;
+                    if( node.jjtGetNumChildren() > 0 ){
+                        int i = 0;
+                        if (mapita.value == "INT"){
                             while( i < node.jjtGetNumChildren() ){
                                 String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
                                 if (child.equals("RETURN")){
@@ -298,11 +304,23 @@ public class Semantico implements ParserVisitor
                             if (!hasReturn){
                                 throw new RuntimeException ("El metodo debe tener un return.");
                             }
+                        } else if (mapita.value == "BOOLEAN"){
+
                         } else {
-                            throw new RuntimeException ("El metodo debe tener un return.");
+                            while( i < node.jjtGetNumChildren() ){
+                                String child = (String) node.jjtGetChild(i).jjtAccept(this, "INT");
+                                if (child.equals("RETURN")){
+                                    hasReturn = true;
+                                    break;
+                                }
+                                i++;
+                            }
+                            if (hasReturn){
+                                throw new RuntimeException ("El metodo es de tipo VOID. No debe tener un return.");
+                            }
                         }
-                    }
-                    */
+                        
+                    }*/
                 }
             } else if (array.get(0) instanceof String){
                 if (array.get(0).equals("FOR")){
@@ -419,16 +437,19 @@ public class Semantico implements ParserVisitor
 		return 0;
 	}
 	public Object visit(ASTRETURN node, Object data){
-        if (data.equals("VOID")){
+        ArrayList<Object> datos = (ArrayList) data;
+        String type = (String) datos.get(0);
+        SymbolNode nodo = (SymbolNode) datos.get(1);
+        if (type.equals("VOID")){
             if (node.jjtGetNumChildren() != 0){
                 throw new RuntimeException("Metodo de tipo VOID. Return no debe regresar un valor.");
             }
         } else if (node.jjtGetNumChildren() > 0){
             String child = (String)node.jjtGetChild(0).jjtAccept(this, null).toString();
-            if (data.equals("INT")){
-                //typeCheck(data, child, "INT");
-            } else if (data.equals("BOOL")){
-                //typeCheck(data, child, "BOOL");
+            if (type.equals("INT")){
+                typeCheck(nodo, child, "INT");
+            } else if (type.equals("BOOL")){
+                typeCheck(nodo, child, "BOOL");
             }
         } else {
             throw new RuntimeException("Return debe regresar un valor.");
